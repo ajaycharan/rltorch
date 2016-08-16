@@ -42,5 +42,34 @@ function Box:size()
   return(self.low:size())
 end
 
+function Box:toJSON()
+  local js={name="Box",low=torch.totable(self.low),high=torch.totable(self.high)}
+  return(json.encode(js))
+end
+
+function Box:convertValueToString(x,format)
+  if (format=="json") then
+    local t=torch.totable(x)
+    return(json.encode(t))
+  elseif (format=="torch") then
+    return(torch.serialize(x)) 
+  else
+    assert(false)
+    return nil
+  end  
+end
+
+function Box:convertStringToValue(_str,format)
+  if (format=="json") then
+    local t=json.decode(_str)
+    return(torch.Tensor(t))
+  elseif(format=="torch") then
+    return torch.deserialize(_str)
+  else
+    assert(false)
+    return nil
+  end  
+end
+
 
  
