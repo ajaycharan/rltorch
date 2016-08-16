@@ -1,5 +1,8 @@
 #Environments #
 
+The platform can be connected to an environment using sockets:
+* [Server/Client Environments](env_server.md)
+
 Different environments are provided by the platform in different families:
 * [Classic Control Tasks](env_classiccontrol.md): Classic control tasks
 * [Atari](env_atari.md): Atari environments

@@ -24,6 +24,9 @@ include('CartPole_v0.lua')
 include('Atari_v0.lua')
 include('Atari_Breakout_v0.lua')
 
+include('ClientEnvironment.lua')
+include('ServerEnvironment.lua')
+
 include('SparseSequentialLearning_v0.lua')
 include('MulticlassClassification_v0.lua')
 

@@ -7,6 +7,8 @@ This package is a Reinforcement Learning package written in LUA for Torch. It ma
   * Imitation-based policies: Stochastic gradient-based imitation policy
   * Predictive policies: policies which goal is to predict an output (for example in order to make classification). 
 * The different policies can be easily used with `openAI Gym` directly in python by using the `lutorpy` package
+* The platform can be connected to any environment through a socket (using JSON as an exchange format)
+
 
 More features are planed:
 * New environments: 
@@ -53,7 +55,7 @@ The package if composed of these different elements:
   * [Classic Control Tasks](doc/env_classiccontrol.md): Classic control tasks
   * [Atari](doc/env_atari.md): Atari environments
   * [Classic Machine Learning](doc/env_classicmachinelearning.md): We also provide some environments that correspond to classical machine learning problems seen as RL environments (multiclass classification for now, one shot learning and structured output prediction for the future).
-  *  * 
+  * The platform is also able to connect to any environment through a socket
 * [Tools](doc/tools.md): different tools
 
 # OpenAI Gym

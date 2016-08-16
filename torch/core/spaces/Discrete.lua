@@ -22,4 +22,14 @@ function Discrete:contains(x)
    if ((x>=1) and (x<=self.n)) then return true else return false end
 end 
 
+function Discrete:toJSON()
+  return(json.encode({name="Discrete",n=self.n}))
+end
 
+function Discrete:convertValueToString(x)
+  return(tostring(x))
+end
+
+function Discrete:convertStringToValue(_str)
+  return(tonumber(_str))
+end

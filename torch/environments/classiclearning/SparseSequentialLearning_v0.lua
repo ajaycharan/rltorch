@@ -25,7 +25,7 @@ function SparseSequentialLearning_v0:__init(parameters)
         self.current_data_idx=0
 end
  
---- the 4-th element of the return contains the true category of the last example. The reward is a zero/one reward
+--- the 4-th element of the return contains the true category of the last example.
 function SparseSequentialLearning_v0:step(agent_action)  
   --- TESTING MODE
         if (self.test) then          
@@ -42,7 +42,6 @@ function SparseSequentialLearning_v0:step(agent_action)
           return {obs,nil,false,feedback}
         end
 end
-
 
 function SparseSequentialLearning_v0:reset(use_test)
     if (use_test) then
@@ -63,5 +62,3 @@ function SparseSequentialLearning_v0:render(arg)
   if (arg.mode=="console") then
   end
 end
-
- 
