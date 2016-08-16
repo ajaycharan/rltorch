@@ -38,7 +38,7 @@ end
 
 
 function MountainCar_v0:reset()
-   self.state = torch.Tensor({math.random()*(-0.4+0.6)-0.4, math.random()*(2*self.max_speed)-self.max_speed})
+   self.state = torch.Tensor({math.random()*(-0.4+0.6)-0.4, 0}) --math.random()*(2*self.max_speed)-self.max_speed})
    return(self.state)
 end 
 
@@ -94,7 +94,7 @@ function MountainCar_v0:render(arg)
       self.__render_widget:stroke()
       
     end
-    sys.sleep(1.0/arg.fps)
+    if (arg.fps~=nil) then sys.sleep(1.0/arg.fps) end
     self.__render_widget:painter()
     
   end

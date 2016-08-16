@@ -120,8 +120,8 @@ function CartPole_v0:render(arg)
     self.__render_widget:lineto(VX+pole_x,VY+pole_y)    
     self.__render_widget:stroke()
     self.__render_widget:painter()
+    if (arg.fps~=nil) then sys.sleep(1.0/arg.fps) end
     
-    sys.sleep(1.0/arg.fps)
   end
 end
 

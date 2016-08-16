@@ -60,6 +60,7 @@ function Atari_v0:render(arg)
     print("Cannot render Atari in console")
   elseif (arg.mode=="qt") then
     self.win=image.display({image=self.last_observation,win=self.win})
+    if (arg.fps~=nil) then sys.sleep(1.0/arg.fps) end
   end
 end
 

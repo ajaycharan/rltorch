@@ -14,7 +14,7 @@ local RLTools = torch.class('rltorch.RLTools');
 ----- render_parameters: if one wants to render the environment, then you have to provide the render parameters
 ----- display_every : display the reward evry n iterations
 
---- The policy receive the immedaite reward, and the discounted sum of reward at the end of the episode
+--- The policy receives the immediate reward, and the discounted sum of reward at the end of the episode
 function RLTools:monitorReward(environment,policy,log,parameters)
   if (parameters.discount_factor==nil) then parameters.discount_factor=1 end
   if (parameters.nb_trajectories==nil) then parameters.nb_trajectories=1000 end

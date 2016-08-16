@@ -2,7 +2,7 @@
  
 local BatchVectorSensor = torch.class('rltorch.BatchVectorSensor','rltorch.Sensor'); 
 
---- Transform a single (n) torch.Tensor to a (1,n) torch Tensor.
+--- Transform a single (n) torch.Tensor to a (1,n) torch Tensor. (i.e convert any observation from a Box space to a single vector)
 function BatchVectorSensor:__init(observation_space)
   rltorch.Sensor.__init(self,observation_space)
   
