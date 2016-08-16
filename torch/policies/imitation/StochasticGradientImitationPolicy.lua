@@ -2,7 +2,7 @@
 require 'nn'
 require 'dpnn'  
   
-  --- A policy for the MulticlassClassification Environment which emulates a SGD algorithm. The SGD is made at the end of each episode. It can also be used for imitation learning. It is based on a NLL Criterion. At each timestep, the feedback method must be used with a true_category value (not a reward) i.e the action that the policy would have taken....
+  --- A policy for the MulticlassClassification Environment which emulates a SGD algorithm. The SGD is made at the end of each episode. It can also be used for imitation learning. It is based on a NLL Criterion. At each timestep, the feedback method must be used with a true_action value (not a reward) i.e the action that the policy would have taken....
 local StochasticGradientImitationPolicy = torch.class('rltorch.StochasticGradientImitationPolicy','rltorch.Policy'); 
 
 --- the policy_module is a R^n -> nb_actions >sampling vector
