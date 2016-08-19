@@ -8,9 +8,10 @@ This package is a Reinforcement Learning package written in LUA for Torch. It ma
 
 # News
 * 19th of August 2016: Major update ! 
-  * Now, environments have been splitted in three components: world, sensor and task. It allows one to easily specify different sensors, and different problems on the same world. It also greatly increase the readability of the platform
+  * Now, environments have been splitted in three components: `World`, `Sensor` and `Feedback`. It allows one to easily specify different sensors, and different problems on the same world. It also greatly increase the readability of the platform
   * Tutorials have been updated
-  * WARNING: Adaptation to openAI GYm will be done in the next few days...
+  * WARNING: Adaptation to openAI Gym will be done in the next few days...
+  * WARNING: the client/server classes also have to be updated
 
 # Dependencies
 
