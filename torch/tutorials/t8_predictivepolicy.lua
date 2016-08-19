@@ -15,15 +15,17 @@ local PROPORTION_TRAIN=0.5
 local data,labels,nb_categories = unpack(rltorch.RLFile():read_libsvm('datasets/breast-cancer_scale'))
 
 
+--- Load libsvm
 local parameters={}
 parameters.training_examples, parameters.training_labels,parameters.testing_examples,parameters.testing_labels = unpack(rltorch.RLFile():split_train_test(data,labels,PROPORTION_TRAIN))
 
-env = rltorch.SparseSequentialLearning_v0(parameters)
-sensor=rltorch.BatchVectorSensor(env.observation_space)
---sensor=rltorch.TilingSensor2D(env.observation_space,30,30)
+--- Create the world
+world = rltorch.FeaturesAcquisitionClassificationWorld(parameters)
+sensor=rltorch.FeaturesAcquisitionClassification_Sensor(world)
+task=rltorch.FeaturesAcquisitionClassification_Task(world)
 
-local size_input=sensor:size()
-local nb_actions=env.action_space.n
+local size_input=sensor.observation_space:size()[2]
+local nb_actions=world.action_space.n
 print("Size input = "..size_input)
 print("Nb_actions = "..nb_actions)
 print("Nb categories = "..nb_categories)
@@ -62,20 +64,22 @@ local arguments={
     criterion=criterion
   }
   
-policy=rltorch.PredictiveRecurrentPolicyGradient(env.observation_space,env.action_space,sensor,arguments)
+policy=rltorch.PredictiveRecurrentPolicyGradient(sensor.observation_space,world.action_space,arguments)
 local train_losses={}
 local test_losses={}
-for i=1,NB_ITERATIONS do
-    
+for i=1,NB_ITERATIONS do    
     --- Evaluation on the test set
     policy.train=false
     local total_loss_test=0
-    local observation,reward,done,feedback
       for j=1,TEST_SIZE do
-      policy:new_episode(env:reset(true))      
+      world:reset(true)
+      policy:new_episode(sensor:observe(world))      
+      local feedback
       for t=1,NB_FEATURES do
         local action=policy:sample()      
-        observation,reward,done,feedback=unpack(env:step(action)) 
+        local observation=sensor:observe(world)        
+        feedback=task:feedback(world); assert(feedback.target~=nil)
+        local done=task:finished(world)
         policy:observe(observation)
       end
       local prediction=policy:predict()
@@ -89,16 +93,20 @@ for i=1,NB_ITERATIONS do
     policy.train=true
     local total_loss_train=0
     for j=1,TRAIN_SIZE do
-      policy:new_episode(env:reset(false))      
+      world:reset(false)
+      policy:new_episode(sensor:observe(world))
+      local feedback
       for t=1,NB_FEATURES do
         local action=policy:sample()      
-        observation,reward,done,feedback=unpack(env:step(action)) 
+        local observation=sensor:observe(world)        
+        feedback=task:feedback(world); assert(feedback.target~=nil) -- the feedback must contain a 'target' value (which is the value to predict at the end of the epiosde)
+        local done=task:finished(world)
         policy:observe(observation)
       end
       local prediction=policy:predict()
       local loss_train=criterion:forward(prediction,feedback.target)
       total_loss_train=total_loss_train+loss_train 
-      policy:end_episode(feedback)
+      policy:end_episode(feedback.target)
     end  
     total_loss_train=total_loss_train/TRAIN_SIZE
     train_losses[i]=total_loss_train

@@ -1,12 +1,12 @@
  
- --- The gaol of a sensor is to transform an observation to a data structure that can be processed by a policy
+ --- The gaol of a sensor is to a world state to an observation
  local Sensor = torch.class('rltorch.Sensor'); 
 
-function Sensor:__init(observation_space)
-  self.observation_space=observation_space
+function Sensor:__init(world)
+  self.observation_space=nil
 end
 
-function Sensor:process(observation)
+function Sensor:observe(world)
   assert(false,"No process function")
 end
 

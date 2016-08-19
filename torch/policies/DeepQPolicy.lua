@@ -13,9 +13,9 @@ local DeepQPolicy = torch.class('rltorch.DeepQPolicy','rltorch.Policy');
 ----- size_memory = the size of the memory for experience reply
 ----- discount_factor = the discount_factor
 ----- epsilon_greedy = the value of epsilon in epsilon greedy
-function DeepQPolicy:__init(observation_space,action_space,sensor,arguments)
+function DeepQPolicy:__init(observation_space,action_space,arguments)
   rltorch.Policy.__init(self,observation_space,action_space) 
-  self.sensor=sensor
+
   self.arguments=arguments
   
   assert(arguments.policy_module~=nil)
@@ -25,6 +25,9 @@ function DeepQPolicy:__init(observation_space,action_space,sensor,arguments)
   assert(arguments.size_memory~=nil)
   assert(arguments.discount_factor~=nil)
   assert(arguments.epsilon_greedy~=nil)
+  
+  self.size_input=observation_space:size()[2]
+  
   
   self.memory={}
   self.memory_position=0
@@ -44,9 +47,9 @@ function DeepQPolicy:init()
   self.params, self.grad = rltorch.ModelsUtils():combine_all_parameters(self.policy_module) 
   self.loss=nn.MSECriterion()
   
-  self.tensor_observation_t=torch.Tensor(self.arguments.size_minibatch,self.sensor:size()) -- the tensor with the observations for the minibatch
+  self.tensor_observation_t=torch.Tensor(self.arguments.size_minibatch,self.size_input) -- the tensor with the observations for the minibatch
   self.tensor_objective=torch.Tensor(self.arguments.size_minibatch,self.action_space.n) -- the objective of learning
-  self.tensor_observation_t_plus_one=torch.Tensor(self.arguments.size_minibatch,self.sensor:size()) -- the tensor with the observations for the minibatch
+  self.tensor_observation_t_plus_one=torch.Tensor(self.arguments.size_minibatch,self.size_input) -- the tensor with the observations for the minibatch
   
   self.feval = function(params_new)
     if self.params ~= params_new then
@@ -109,12 +112,12 @@ function DeepQPolicy:chooseMemoryCell(ob)
 end  
 
 function DeepQPolicy:new_episode(initial_observation,informations)
-  self.last_sensor=self.sensor:process(initial_observation):clone()
+  self.last_sensor=initial_observation:clone()
   self:chooseMemoryCell(self.last_sensor)
 end
 
 function  DeepQPolicy:observe(observation)  
-  self.last_sensor=self.sensor:process(observation):clone()
+  self.last_sensor=observation:clone()
   self.last_memory_position=self.memory_position
   self.memory[self.memory_position].observation_plus_one=self.last_sensor
   

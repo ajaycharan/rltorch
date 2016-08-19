@@ -18,9 +18,8 @@ local PredictiveRecurrentPolicyGradient = torch.class('rltorch.PredictiveRecurre
 ----- optim_params = the optim initial state 
 ----- arguments.size_memory_for_bias = number of steps to aggregate for computing the bias in policy gradient -- the n last reward values are used to correct the reward obtained.
 ------ criterion : the criterion used for back propagation
-function PredictiveRecurrentPolicyGradient:__init(observation_space,action_space,sensor,arguments)
+function PredictiveRecurrentPolicyGradient:__init(observation_space,action_space,arguments)
   rltorch.Policy.__init(self,observation_space,action_space) 
-  self.sensor=sensor
     
   assert(arguments.policy_module~=nil)
   assert(arguments.predictive_module~=nil)
@@ -102,14 +101,14 @@ function PredictiveRecurrentPolicyGradient:new_episode(initial_observation,infor
   self.trajectory=rltorch.Trajectory()
   self.states={}
   self.position=1
-  self.last_sensor=self.sensor:process(initial_observation):clone()
+  self.last_sensor=initial_observation:clone()
   self.trajectory:push_observation(self.last_sensor)
   --coputing the first state. 
   self.states[1]=self.arguments.initial_recurrent_module:forward({self.arguments.initial_state,self.last_sensor})
 end
 
 function  PredictiveRecurrentPolicyGradient:observe(observation)  
-  self.last_sensor=self.sensor:process(observation):clone()
+  self.last_sensor=observation:clone()
   self.trajectory:push_observation(self.last_sensor)
   
   self.states[self.position+1]=self.rmodules[self.trajectory.actions[self.position]][self.position]:forward({self.states[self.position],self.last_sensor})
@@ -117,7 +116,7 @@ function  PredictiveRecurrentPolicyGradient:observe(observation)
 end
 
 function PredictiveRecurrentPolicyGradient:feedback(reward)
-  self.trajectory:push_feedback(reward)
+  assert(false)  
 end
 
 function PredictiveRecurrentPolicyGradient:sample()
@@ -133,7 +132,7 @@ function PredictiveRecurrentPolicyGradient:predict()
 end
 
 function PredictiveRecurrentPolicyGradient:end_episode(feedback)
-  self.final_target=feedback.target:clone():reshape(1,feedback.target:size(1))
+  self.final_target=feedback:clone():reshape(1,feedback:size(1))
   if (self.train) then  local _,fs=self.optim(self.feval,self.params,self.optim_params)  end
 end
 

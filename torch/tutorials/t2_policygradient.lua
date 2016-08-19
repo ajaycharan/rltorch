@@ -7,22 +7,20 @@ MAX_LENGTH=1000
 DISCOUNT_FACTOR=1.0
 NB_TRAJECTORIES=10000
 
---env = rltorch.MountainCar_v0()
-env = rltorch.CartPole_v0()
+--- Build the problem components
+  world=rltorch.CartPoleWorld() -- the world
+  task=rltorch.CartPole_Task0(world) -- the task
+  sensor=rltorch.CartPole_CompleteSensor(world) -- the sensor
+  
 math.randomseed(os.time())
---env = rltorch.EmptyMaze_v0(10,10)
-sensor=rltorch.BatchVectorSensor(env.observation_space)
---sensor=rltorch.TilingSensor2D(env.observation_space,30,30)
 
-local size_input=sensor:size()
-local nb_actions=env.action_space.n
+-- The input size of the neural network depends on the sensor. 
+local size_input=sensor.observation_space:size()[2]
+local nb_actions=world.action_space.n
 
--- Creating the policy module
+-- Creating the policy module (neural network)
 local module_policy=nn.Sequential():add(nn.Linear(size_input,nb_actions)):add(nn.SoftMax()):add(nn.ReinforceCategorical())
---local module_policy=nn.Sequential():add(nn.Linear(size_input,nb_actions*2)):add(nn.Tanh()):add(nn.Linear(nb_actions*2,nb_actions)):add(nn.SoftMax()):add(nn.ReinforceCategorical())
 module_policy:reset(0.01)
-
-
 
 local arguments={
     policy_module = module_policy,
@@ -33,23 +31,29 @@ local arguments={
       },
     size_memory_for_bias=100
   }
-  
-policy=rltorch.PolicyGradient(env.observation_space,env.action_space,sensor,arguments)
 
+-- create the policy
+policy=rltorch.PolicyGradient(sensor.observation_space,world.action_space,arguments)
+
+-- Learning loop
 local rewards={}
 for i=1,NB_TRAJECTORIES do
-  print("Starting episode "..i)
-    policy:new_episode(env:reset())  
+    print("Starting episode "..i)
+    world:reset()
+    policy:new_episode(sensor:observe(world))  
     local sum_reward=0.0
     local current_discount=1.0
     
-    for t=1,MAX_LENGTH do  
-      env:render{mode="empty"}      
-      local action=policy:sample()      
-      local observation,reward,done,info=unpack(env:step(action))    
-      policy:feedback(reward) -- the immediate reward is provided to the policy
+    for t=1,MAX_LENGTH do            
+      local action=policy:sample()     
+      world:step(action)
+      local observation=sensor:observe(world)
+      local feedback=task:feedback(world)
+      local done=task:finished(world)
+      assert(feedback.reward~=nil)  
+
       policy:observe(observation)      
-      sum_reward=sum_reward+current_discount*reward -- comptues the discounted sum of rewards
+      sum_reward=sum_reward+current_discount*feedback.reward -- computes the discounted sum of rewards
       current_discount=current_discount*DISCOUNT_FACTOR      
       if (done) then        
         break
@@ -62,4 +66,3 @@ for i=1,NB_TRAJECTORIES do
     
     policy:end_episode(sum_reward) -- The feedback provided for the whole episode here is the discounted sum of rewards      
 end
-env:close()

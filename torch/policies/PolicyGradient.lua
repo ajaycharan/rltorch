@@ -12,9 +12,8 @@ local PolicyGradient = torch.class('rltorch.PolicyGradient','rltorch.Policy');
 ----- optim = the optim method (e.g optim.adam)
 ----- optim_params = the optim initial state 
 ----- arguments.size_memory_for_bias = number of steps to aggregate for computing the bias in policy gradient -- the n last reward values are used to correct the reward obtained.
-function PolicyGradient:__init(observation_space,action_space,sensor,arguments)
-  rltorch.Policy.__init(self,observation_space,action_space) 
-  self.sensor=sensor
+function PolicyGradient:__init(observation_space,action_space,arguments)
+  rltorch.Policy.__init(self,observation_space,action_space)   
     
   assert(arguments.policy_module~=nil)
   assert(arguments.max_trajectory_size~=nil)
@@ -64,12 +63,12 @@ end
 
 function PolicyGradient:new_episode(initial_observation,informations)
   self.trajectory=rltorch.Trajectory()
-  self.last_sensor=self.sensor:process(initial_observation):clone()
+  self.last_sensor=initial_observation:clone()
   self.trajectory:push_observation(self.last_sensor)
 end
 
 function  PolicyGradient:observe(observation)  
-  self.last_sensor=self.sensor:process(observation):clone()
+  self.last_sensor=observation:clone()
   --print(self.last_sensor)
   self.trajectory:push_observation(self.last_sensor)  
 end

@@ -2,29 +2,39 @@
 
 How can we learn to imitate ? 
 
-Here, we will use environments that (in adition to a reward) provide a `true_action` information.
+Here, we will use a feedback that (in adition to a reward) provides a `true_action` information.
 
 # Tutorial 7 : Learning by Imitation -- Multiclass Classification by SGD
 
-This tutorial is very close to the tutorial number 6 since it involves the same environment (`MuticlassClassificationEnvironment`) which can be used for both reward-based policies, and also imitation policies.
-
-First, we create the environment
 ```lua
+--- This tutorial shows how a classical multiclass classification problem can be handled in a RL framework
+--- In this tutorial, this is viewed as a classical RL problem
+
+require ('optim') 
+require('rltorch')
+require('svm')
+
+math.randomseed(os.time())
+
+
+local NB_ITERATIONS=1000 -- The number of trajectories
+local SIZE_ITERATION=1000 -- The number of training example to sample for each trajectory
+
 local PROPORTION_TRAIN=0.5
 local data,labels = unpack(rltorch.RLFile():read_libsvm('datasets/breast-cancer_scale'))
 local parameters={}
 parameters.training_examples, parameters.training_labels,parameters.testing_examples,parameters.testing_labels = unpack(rltorch.RLFile():split_train_test(data,labels,PROPORTION_TRAIN))
 
-env = rltorch.MulticlassClassification_v0(parameters)
-sensor=rltorch.BatchVectorSensor(env.observation_space)
+world = rltorch.MulticlassClassificationWorld(parameters)
+task=rltorch.MulticlassClassification_Task(world)
+sensor=rltorch.MulticlassClassification_Sensor(world)
 --sensor=rltorch.TilingSensor2D(env.observation_space,30,30)
 
-local size_input=sensor:size()
-local nb_actions=env.action_space.n
-```
-
-Then, we create the policy based on a linear module that computes one score for each possible action
-```lua
+local size_input=sensor.observation_space:size()[2]
+local nb_actions=world.action_space.n
+print("Size input = "..size_input)
+print("Nb_actions = "..nb_actions)
+-- Creating the policy module
 local module_policy=nn.Sequential():add(nn.Linear(size_input,nb_actions))
 module_policy:reset(0.01)
 
@@ -36,16 +46,58 @@ local arguments={
       },    
   }
   
-policy=rltorch.StochasticGradientImitationPolicy(env.observation_space,env.action_space,sensor,arguments)
-```
+policy=rltorch.StochasticGradientImitationPolicy(sensor.observation_space,world.action_space,arguments)
 
-Now, we keep the same loop than tutorial 6 (for both evaluation on the testing and training sets). The only difference is that we provide, as a feedback, the true action given by the environment. The difference is in these two lines:
-```lua
-      local observation,reward,done,feedback=unpack(env:step(action))    
-      policy:feedback(feedback.true_action) 
-```
-instead of 
-```lua
-      local observation,reward,done,feedback=unpack(env:step(action))    
-      policy:feedback(reward)
+
+local train_rewards={}
+local test_rewards={}
+for i=1,NB_ITERATIONS do
+    
+    --- Evaluation on the test set
+    policy.train=false
+    world:reset(true)
+    policy:new_episode(sensor:observe(world)) 
+    
+    local sum_reward_test=0.0
+    local flag=true 
+    while(flag) do  
+      local action=policy:sample()      
+      world:step(action)
+      local observation=sensor:observe(world)
+      local feedback=task:feedback(world)
+      local done=task:finished(world)
+      
+      sum_reward_test=sum_reward_test+feedback.reward -- comptues the discounted sum of rewards
+      --print(reward)
+      if (done) then flag=false else policy:observe(observation) end       
+    end
+    test_rewards[i]=sum_reward_test/parameters.testing_examples:size(1)
+    print("0/1 Reward at iteration "..i.." (test) is "..sum_reward_test)  
+    
+    -- Evaluation + training on training examples
+    policy.train=true
+    world:reset(false)    
+    policy:new_episode(sensor:observe(world)) 
+    local sum_reward=0.0
+    
+    for t=1,SIZE_ITERATION do  
+      local action=policy:sample()      
+      world:step(action)
+      local feedback=task:feedback(world)
+      local done=task:finished(world)
+      
+      local observation=sensor:observe(world)
+      assert(feedback.true_action~=nil)   -- The feedback to provide must contain a trueè_action value
+      policy:feedback(feedback.true_action)
+
+      sum_reward=sum_reward+feedback.reward 
+           policy:observe(observation)
+    end
+    policy:end_episode()
+    
+    train_rewards[i]=sum_reward/SIZE_ITERATION
+    print("0/1 Reward at iteration "..i.." (train) is "..sum_reward)  
+    if (i%100==0) then gnuplot.plot({"Training accuracy",torch.Tensor(train_rewards),"~"},{"Testing accuracy",torch.Tensor(test_rewards),"~"}) end    
+end
+world:close()
 ```

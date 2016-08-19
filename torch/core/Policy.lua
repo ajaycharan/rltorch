@@ -6,7 +6,7 @@ local Policy = torch.class('rltorch.Policy');
 
 --- Initialize the policy given the observation and action spaces
 -- See Space.lua
-function Policy:__init(observation_space,action_space,sensor)
+function Policy:__init(observation_space,action_space)
   self.observation_space=observation_space
   self.action_space=action_space
   self.sensor=sensor
@@ -22,7 +22,7 @@ function  Policy:observe(observation)
 end
 
 --- This function corresponds to the immediate feedback (e.g reward) received after each action
-function Policy:feedback(reward)
+function Policy:feedback(feedback)
 end
 
 --- Sample an action 

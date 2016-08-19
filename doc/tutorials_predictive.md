@@ -2,26 +2,39 @@
 
 # Predictive Recurrent Policy Gradient Tutorial
 
-We explain here how the `PredictiveRecurrentPolicyGradient` policy can be used for making prediction (seen as a sequential process). It aims at targetting a muticlass classification problem where the sequential process acquires one features at each timestep as described for example in `Gabriel Dulac-Arnold, Ludovic Denoyer, Philippe Preux, Patrick Gallinari: Sequential approaches for learning datum-wise sparse representations. Machine Learning 89(1-2): 87-122 (2012)`. At the end of the acquisition process, the policy has to predict the category of the given example. 
+We explain here how the `PredictiveRecurrentPolicyGradient` policy can be used for making prediction (seen as a sequential process). It aims at targetting a muticlass classification problem where the sequential process acquires one feature at each timestep as described  in `Gabriel Dulac-Arnold, Ludovic Denoyer, Philippe Preux, Patrick Gallinari: Sequential approaches for learning datum-wise sparse representations. Machine Learning 89(1-2): 87-122 (2012)`. At the end of the acquisition process, the policy has to predict the category of the given example. 
 
 First, we load a dataset and create the corresponding environment
 
 ```lua
+
+require ('optim') 
+require('rltorch')
+require('svm')
+
+math.randomseed(os.time())
+
+
+local TEST_SIZE=100 -- The number of trajectories
+local TRAIN_SIZE=100 -- The number of trajectories
+local NB_ITERATIONS=1000 -- The number of training example to sample for each trajectory
+local NB_FEATURES=5
+
 local PROPORTION_TRAIN=0.5
 local data,labels,nb_categories = unpack(rltorch.RLFile():read_libsvm('datasets/breast-cancer_scale'))
 
+
+--- Load libsvm
 local parameters={}
 parameters.training_examples, parameters.training_labels,parameters.testing_examples,parameters.testing_labels = unpack(rltorch.RLFile():split_train_test(data,labels,PROPORTION_TRAIN))
 
-env = rltorch.SparseSequentialLearning_v0(parameters)
-sensor=rltorch.BatchVectorSensor(env.observation_space)
-```
+--- Create the world
+world = rltorch.FeaturesAcquisitionClassificationWorld(parameters)
+sensor=rltorch.FeaturesAcquisitionClassification_Sensor(world)
+task=rltorch.FeaturesAcquisitionClassification_Task(world)
 
-Second, we create the predictive policy. The classification problem is handled as a Negative Log-Lieklihood minimization problem.
-
-```lua
-local size_input=sensor:size()
-local nb_actions=env.action_space.n
+local size_input=sensor.observation_space:size()[2]
+local nb_actions=world.action_space.n
 print("Size input = "..size_input)
 print("Nb_actions = "..nb_actions)
 print("Nb categories = "..nb_categories)
@@ -30,7 +43,6 @@ print("Nb categories = "..nb_categories)
 local N=10 -- the size of the latent space
 local STDV=0.01
 local initial_state=torch.Tensor(1,N):fill(0)
-
 -- Creating the policy module which maps the latent space to the action space.
 local module_policy=nn.Sequential():add(nn.Linear(N,nb_actions)):add(nn.SoftMax()):add(nn.ReinforceCategorical()); module_policy:reset(STDV)
 local initial_recurrent_module = rltorch.RNN():rnn_cell(size_input,N,N); initial_recurrent_module:reset(STDV)
@@ -61,25 +73,22 @@ local arguments={
     criterion=criterion
   }
   
-policy=rltorch.PredictiveRecurrentPolicyGradient(env.observation_space,env.action_space,sensor,arguments)
-```
-
-At last, we train the policy, and evaluates it at each timestep over the testing set. Note that all the trajectories have the same size (NB_FEATURES) which corresponds to the number of features that will be acquired for each example to classify.
-
-```lua
+policy=rltorch.PredictiveRecurrentPolicyGradient(sensor.observation_space,world.action_space,arguments)
 local train_losses={}
 local test_losses={}
-for i=1,NB_ITERATIONS do
-    
+for i=1,NB_ITERATIONS do    
     --- Evaluation on the test set
     policy.train=false
     local total_loss_test=0
-    local observation,reward,done,feedback
       for j=1,TEST_SIZE do
-      policy:new_episode(env:reset(true))      
+      world:reset(true)
+      policy:new_episode(sensor:observe(world))      
+      local feedback
       for t=1,NB_FEATURES do
         local action=policy:sample()      
-        observation,reward,done,feedback=unpack(env:step(action)) 
+        local observation=sensor:observe(world)        
+        feedback=task:feedback(world); assert(feedback.target~=nil)
+        local done=task:finished(world)
         policy:observe(observation)
       end
       local prediction=policy:predict()
@@ -93,16 +102,20 @@ for i=1,NB_ITERATIONS do
     policy.train=true
     local total_loss_train=0
     for j=1,TRAIN_SIZE do
-      policy:new_episode(env:reset(false))      
+      world:reset(false)
+      policy:new_episode(sensor:observe(world))
+      local feedback
       for t=1,NB_FEATURES do
         local action=policy:sample()      
-        observation,reward,done,feedback=unpack(env:step(action)) 
+        local observation=sensor:observe(world)        
+        feedback=task:feedback(world); assert(feedback.target~=nil) -- the feedback must contain a 'target' value (which is the value to predict at the end of the epiosde)
+        local done=task:finished(world)
         policy:observe(observation)
       end
       local prediction=policy:predict()
       local loss_train=criterion:forward(prediction,feedback.target)
       total_loss_train=total_loss_train+loss_train 
-      policy:end_episode(feedback)
+      policy:end_episode(feedback.target)
     end  
     total_loss_train=total_loss_train/TRAIN_SIZE
     train_losses[i]=total_loss_train

@@ -5,15 +5,19 @@ MAX_LENGTH=100
 DISCOUNT_FACTOR=1.0
 NB_TRAJECTORIES=10000
 
---env = rltorch.MountainCar_v0()
-env = rltorch.CartPole_v0()
-math.randomseed(os.time())
-sensor=rltorch.BatchVectorSensor(env.observation_space)
---sensor=rltorch.TilingSensor2D(env.observation_space,30,30)
+--- Build the problem components
+  world=rltorch.CartPoleWorld() -- the world
+  task=rltorch.CartPole_Task0(world) -- the task
+  sensor=rltorch.CartPole_CompleteSensor(world) -- the sensor.
+  qsensor=rltorch.CartPole_QtSensor(world,320,200) -- (for visualization)
 
-local size_input=sensor:size()
-print("Inpust size is "..size_input)
-local nb_actions=env.action_space.n
+
+math.randomseed(os.time())
+
+local size_input=sensor.observation_space:size()[2]
+local nb_actions=world.action_space.n
+
+print("Input size is "..size_input)
 print("Number of actions is "..nb_actions)
 
 -- Creating the policy module
@@ -35,25 +39,28 @@ local arguments={
   }
   
 --policy=rltorch.RandomPolicy(env.observation_space,env.action_space,sensor)
-policy=rltorch.DeepQPolicy(env.observation_space,env.action_space,sensor,arguments)
+policy=rltorch.DeepQPolicy(sensor.observation_space,world.action_space,arguments)
 
 local rewards={}
 
 
 for i=1,NB_TRAJECTORIES do
   print("Starting episode "..i)
-    policy:new_episode(env:reset())  
+    world:reset()
+    policy:new_episode(sensor:observe(world))  
     local sum_reward=0.0
     local current_discount=1.0
     
     for t=1,MAX_LENGTH do  
-      --env:render{mode="qt",fps=30}      
-     -- env:render{mode="human"}      
       local action=policy:sample()      
-      local observation,reward,done,info=unpack(env:step(action))    
-      policy:feedback(reward) -- the immediate reward is provided to the policy
+      world:step(action)
+      local observation=sensor:observe(world)
+      --qsensor:observe(world)
+      local feedback=task:feedback(world) 
+      local done=task:finished(world)
+      policy:feedback(feedback.reward) -- the immediate reward is provided to the policy
       policy:observe(observation)      
-      sum_reward=sum_reward+current_discount*reward -- comptues the discounted sum of rewards
+      sum_reward=sum_reward+current_discount*feedback.reward -- comptues the discounted sum of rewards
       current_discount=current_discount*DISCOUNT_FACTOR      
       if (done) then        
         break
@@ -63,7 +70,7 @@ for i=1,NB_TRAJECTORIES do
     rewards[i]=sum_reward
     if (i%100==0) then gnuplot.plot(torch.Tensor(rewards),"|") end
     
-    policy:end_episode() -- The feedback provided for the whole episode here is the discounted sum of rewards      
+    policy:end_episode() 
     if (i>10000) then policy.train=false end
 end
-env:close()
+world:close()

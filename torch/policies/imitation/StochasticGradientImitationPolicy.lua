@@ -10,9 +10,8 @@ local StochasticGradientImitationPolicy = torch.class('rltorch.StochasticGradien
 ----- policy_module = the policy module (takes a 1*n matrix to a 1*n vector of scores)
 ----- optim = the optim method (e.g optim.adam)
 ----- optim_params = the optim initial state 
-function StochasticGradientImitationPolicy:__init(observation_space,action_space,sensor,arguments)
+function StochasticGradientImitationPolicy:__init(observation_space,action_space,arguments)
   rltorch.Policy.__init(self,observation_space,action_space) 
-  self.sensor=sensor
     
   assert(arguments.policy_module~=nil)
   assert(arguments.optim~=nil)
@@ -40,7 +39,6 @@ function StochasticGradientImitationPolicy:init()
       input[i]:copy(self.trajectory.observations[i][1])
       ground_truth[i][1]=self.trajectory.feedback[i]
     end
-    
     local out=self.arguments.policy_module:forward(input)
     local loss=self.criterion:forward(out,ground_truth)
     local delta=self.criterion:backward(out,ground_truth)    
@@ -52,12 +50,12 @@ end
 
 function StochasticGradientImitationPolicy:new_episode(initial_observation,informations)
   self.trajectory=rltorch.Trajectory()
-  self.last_sensor=self.sensor:process(initial_observation):clone()
+  self.last_sensor=initial_observation:clone()
   self.trajectory:push_observation(self.last_sensor)
 end
 
 function  StochasticGradientImitationPolicy:observe(observation)  
-  self.last_sensor=self.sensor:process(observation):clone()
+  self.last_sensor=observation:clone()
   self.trajectory:push_observation(self.last_sensor)  
 end
 
@@ -73,7 +71,7 @@ function StochasticGradientImitationPolicy:sample()
 end
 
 function StochasticGradientImitationPolicy:end_episode()
-  if (self.train) then   local _,fs=self.arguments.optim(self.feval,self.params,self.arguments.optim_params)  end
+  if (self.train) then local _,fs=self.arguments.optim(self.feval,self.params,self.arguments.optim_params)  end
 end
 
  

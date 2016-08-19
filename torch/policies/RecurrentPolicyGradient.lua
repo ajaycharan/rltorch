@@ -16,9 +16,8 @@ local RecurrentPolicyGradient = torch.class('rltorch.RecurrentPolicyGradient','r
 ----- optim = the optim method (e.g optim.adam)
 ----- optim_params = the optim initial state 
 ----- arguments.size_memory_for_bias = number of steps to aggregate for computing the bias in policy gradient -- the n last reward values are used to correct the reward obtained.
-function RecurrentPolicyGradient:__init(observation_space,action_space,sensor,arguments)
+function RecurrentPolicyGradient:__init(observation_space,action_space,arguments)
   rltorch.Policy.__init(self,observation_space,action_space) 
-  self.sensor=sensor
     
   assert(arguments.policy_module~=nil)
   assert(arguments.recurrent_modules~=nil)
@@ -89,7 +88,7 @@ function RecurrentPolicyGradient:new_episode(initial_observation,informations)
   self.trajectory=rltorch.Trajectory()
   self.states={}
   self.position=1
-  self.last_sensor=self.sensor:process(initial_observation):clone()
+  self.last_sensor=initial_observation:clone()
   self.trajectory:push_observation(self.last_sensor)
   
   --coputing the first state. 
@@ -97,7 +96,7 @@ function RecurrentPolicyGradient:new_episode(initial_observation,informations)
 end
 
 function  RecurrentPolicyGradient:observe(observation)  
-  self.last_sensor=self.sensor:process(observation):clone()
+  self.last_sensor=observation:clone()
   self.trajectory:push_observation(self.last_sensor)
   
   self.states[self.position+1]=self.rmodules[self.trajectory.actions[self.position]][self.position]:forward({self.states[self.position],self.last_sensor})

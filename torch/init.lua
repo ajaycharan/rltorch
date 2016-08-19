@@ -1,36 +1,57 @@
 require 'torch'
 rltorch={}
 
+include('World.lua')
 include('Environment.lua')
+include('Feedback.lua')
+include('Sensor.lua')
+
 include('RLTools.lua')
 include('RLFile.lua')
 
 include('Trajectory.lua')
 include('Trajectories.lua')
 
-include('Sensor.lua')
-include('IdSensor.lua')
-include('BatchVectorSensor.lua')
-include('BatchVectorSensor_ForAtari.lua')
-include('TilingSensor2D.lua')
+include('FlattenSensor.lua')
 
 include('Space.lua')
 include('Discrete.lua')
 include('Box.lua')
 include('MultipleSpaces.lua')
 
-include('MountainCar_v0.lua')
-include('CartPole_v0.lua')
-include('Atari_v0.lua')
-include('Atari_Breakout_v0.lua')
+-- Mountain car
+	include('MountainCarWorld.lua')
+	include('MountainCar_CompleteSensor.lua')
+	include('MountainCar_QtSensor.lua')
+	include('MountainCar_Task0.lua')
+	include('MountainCar_v0.lua')
 
-include('ClientEnvironment.lua')
-include('ServerEnvironment.lua')
+-- Cart Pole
+	include('CartPoleWorld.lua')
+	include('CartPole_CompleteSensor.lua')
+	include('CartPole_QtSensor.lua')
+	include('CartPole_Task0.lua')
+	include('CartPole_v0.lua')
 
-include('SparseSequentialLearning_v0.lua')
-include('MulticlassClassification_v0.lua')
+-- Atari 
+	include('AtariWorld.lua')
+	include('Atari_Task.lua')
+	include('Atari_ImageSensor.lua')
+	include('AtariWorld_Breakout.lua')
 
-include('EmptyMaze_v0.lua')
+-- Classification
+	include('MulticlassClassificationWorld.lua')
+	include('MulticlassClassification_Sensor.lua')
+	include('MulticlassClassification_Task.lua')
+
+-- Features Acquisition
+	include('FeaturesAcquisitionClassificationWorld.lua')
+	include('FeaturesAcquisitionClassification_Task.lua')
+	include('FeaturesAcquisitionClassification_Sensor.lua')
+
+
+--include('ClientEnvironment.lua')
+--include('ServerEnvironment.lua')
 
 include('Policy.lua')
 include('RandomPolicy.lua')

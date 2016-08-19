@@ -1,3 +1,5 @@
+
+
 require ('optim') 
 require('rltorch')
 
@@ -5,16 +7,16 @@ MAX_LENGTH=100
 DISCOUNT_FACTOR=1.0
 NB_TRAJECTORIES=10000
 
---env = rltorch.MountainCar_v0()
-env = rltorch.CartPole_v0() 
+--- Build the problem components
+world=rltorch.CartPoleWorld() -- the world
+task=rltorch.CartPole_Task0(world) -- the task
+sensor=rltorch.CartPole_CompleteSensor(world) -- the sensor
+  
 math.randomseed(os.time())
---env = rltorch.EmptyMaze_v0(10,10)
-sensor=rltorch.BatchVectorSensor(env.observation_space)
---sensor=rltorch.TilingSensor2D(env.observation_space,30,30)
 
-local size_input=sensor:size()
-local nb_actions=env.action_space.n
-
+-- The input size of the neural network depends on the sensor. 
+local size_input=sensor.observation_space:size()[2]
+local nb_actions=world.action_space.n
 
 local N=10 -- the size of the latent space
 local STDV=0.01
@@ -27,7 +29,7 @@ local initial_state=torch.Tensor(1,N):fill(0)
 -- This module  maps the initial state + initial observation to a new state in the latent space
 local initial_recurrent_module = rltorch.RNN():rnn_cell(size_input,N,N); initial_recurrent_module:reset(STDV)
 
--- Now we define one module for each possibl action. Each module maps the current state + new observation to a new state
+-- Now we define one module for each possible action. Each module maps the current state + new observation to a new state
 local recurrent_modules={}
 for a=1,nb_actions do
   recurrent_modules[a]=rltorch.GRU():gru_cell(size_input,N)
@@ -49,22 +51,26 @@ local arguments={
     size_memory_for_bias=100
   }
   
-policy=rltorch.RecurrentPolicyGradient(env.observation_space,env.action_space,sensor,arguments)
+policy=rltorch.RecurrentPolicyGradient(sensor.observation_space,world.action_space,arguments)
 
+-- Learning loop
 local rewards={}
 for i=1,NB_TRAJECTORIES do
-  print("Starting episode "..i)
-    policy:new_episode(env:reset())  
+    print("Starting episode "..i)
+    world:reset()
+    policy:new_episode(sensor:observe(world))  
     local sum_reward=0.0
     local current_discount=1.0
     
-    for t=1,MAX_LENGTH do  
-      env:render{mode="empty"}      
-      local action=policy:sample()      
-      local observation,reward,done,info=unpack(env:step(action))    
-      policy:feedback(reward) -- the immediate reward is provided to the policy
+    for t=1,MAX_LENGTH do            
+      local action=policy:sample()     
+      world:step(action)
+      local observation=sensor:observe(world)
+      local feedback=task:feedback(world)
+      local done=task:finished(world)
+      assert(feedback.reward~=nil)  
       policy:observe(observation)      
-      sum_reward=sum_reward+current_discount*reward -- comptues the discounted sum of rewards
+      sum_reward=sum_reward+current_discount*feedback.reward -- comptues the discounted sum of rewards
       current_discount=current_discount*DISCOUNT_FACTOR      
       if (done) then        
         break
@@ -73,8 +79,9 @@ for i=1,NB_TRAJECTORIES do
     
     rewards[i]=sum_reward
     print("Reward at "..i.." is "..sum_reward)
-    if (i%10==0) then gnuplot.plot(torch.Tensor(rewards),"|") end
+    if (i%100==0) then gnuplot.plot(torch.Tensor(rewards),"|") end
     
     policy:end_episode(sum_reward) -- The feedback provided for the whole episode here is the discounted sum of rewards      
 end
-env:close()
+
+

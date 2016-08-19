@@ -1,21 +1,16 @@
 
 This package is a Reinforcement Learning package written in LUA for Torch. It main features are (for now):
-* Different environments are provided, from classical RL environments, ATARI games, to special ones like the `multiclass classification environment` that casts a classification learning problem to a RL problem.
-  * Sequential Acquisition Environment as described in `Gabriel Dulac-Arnold, Ludovic Denoyer, Philippe Preux, Patrick Gallinari: Sequential approaches for learning datum-wise sparse representations. Machine Learning 89(1-2): 87-122 (2012)`
-* Different learning policies are provided:
+* Different environments are provided, from classical RL environments, ATARI games, to special ones like the `multiclass classification environment` that casts a classification learning problem to a RL problem.  
   * Classic reward-based policies: Policy gradient, recurrent policy gradient, approximated q-learning with experience replay (also known as deep Q learning)
   * Imitation-based policies: Stochastic gradient-based imitation policy
-  * Predictive policies: policies which goal is to predict an output (for example in order to make classification). 
+  * Predictive policies: policies which goal is to predict an output and not to maximize a reward
 * The different policies can be easily used with `openAI Gym` directly in python by using the `lutorpy` package
-* The platform can be connected to any environment through a socket (using JSON as an exchange format)
 
-
-More features are planed:
-* New environments: 
-  * Text classification environment (sequential reading) as described in `Gabriel Dulac-Arnold, Ludovic Denoyer, Patrick Gallinari: Text Classification: A Sequential Reading Approach. ECIR 2011: 411-423`
-  * Image classification with attention as described in `Gabriel Dulac-Arnold, Ludovic Denoyer, Nicolas Thome, Matthieu Cord, Patrick Gallinari: Sequentially Generated Instance-Dependent Image Representations for Classification. ICLR 2014`   
-  * ...
-* New learning policies
+# News
+* 19th of August 2016: Major update ! 
+  * Now, environments have been splitted in three components: world, sensor and task. It allows one to easily specify different sensors, and different problems on the same world. It also greatly increase the readability of the platform
+  * Tutorials have been updated
+  * WARNING: Adaptation to openAI GYm will be done in the next few days...
 
 # Dependencies
 
@@ -49,22 +44,21 @@ For using openAI Gym:
 
 The package if composed of these different elements:
 * [Core](doc/core.md): the core classes
-* [Sensors](doc/sensors.md): the different sensors
+* [Sensors](doc/sensors.md): the different generic sensors (that are not specific to a particular world)
 * [Policies](doc/policies.md): different (learning) policies
 * [Environments](doc/environments.md): different environments
   * [Classic Control Tasks](doc/env_classiccontrol.md): Classic control tasks
   * [Atari](doc/env_atari.md): Atari environments
-  * [Classic Machine Learning](doc/env_classicmachinelearning.md): We also provide some environments that correspond to classical machine learning problems seen as RL environments (multiclass classification for now, one shot learning and structured output prediction for the future).
-  * The platform is also able to connect to any environment through a socket
+  * [Classic Machine Learning](doc/env_classicmachinelearning.md): We also provide some environments that correspond to classical machine learning problems seen as RL environments 
 * [Tools](doc/tools.md): different tools
 
 # OpenAI Gym
 
-The interface with the open AI Gym package is explained [Here](doc/openai.md)
+(To update) The interface with the open AI Gym package is explained [Here](doc/openai.md)
 
 # Tutorials
 
-The tutorials are avaialbe here: [Tutorials](doc/tutorials.md)
+The tutorials are avalaible here: [Tutorials](doc/tutorials.md)
 
 # FAQ
 

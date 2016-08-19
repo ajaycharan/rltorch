@@ -3,67 +3,83 @@
 ## Tutorial : Testing an environment
 (see tutorials/t0_running.lua)
 
-* Creation of a new environment: 
-
-```lua
-    env=rltorch.MountainCar_v0()
-    print(env.observation_space)
-    print(env.action_space)
 ```
+-- Create the world
+world=rltorch.CartPoleWorld()
 
-* Sample 1 000 states from this environment choosing the actions with a uniform distribution!
+-- Create a sensor for rendering
+renderer=rltorch.CartPole_QtSensor(world,320,200)
 
-```lua
-    for i=1,1000 do
-        env:render{mode="console"}
-        local observation,reward,done,info=unpack(env:step(env.action_space:sample()))    
-    end
+-- One trajectory
+world:reset()
+for i=1,1000 do    
+    -- Apply a random action
+    world:step(world.action_space:sample())
+    
+    -- Use the sensor to visualize the world state
+    renderer:observe(world)
+    sys.sleep(0.1)
+end
 ```
-
-Note that, in many environments, one can use `env:render{mode="qt",fps="30"}` if one wants to view the environment using Qt. `fps` is the max number of frames per second. In this code, the action is sampled from the `action_space` using the `Space:sample()` method
 
 # Tutorial 1:  A (random) agent interacting with an environment
 (see tutorials/t1_policy.lua)
 
-*  Create the environment
-```lua
-    env = rltorch.MountainCar_v0()
 ```
+-- Create the world
+world = rltorch.CartPoleWorld()
 
-* Create the agent (or policy)
-```lua
-    policy=rltorch.RandomPolicy(env.observation_space,env.action_space)
-```
+-- Create the learning problem
+task=rltorch.CartPole_Task0(world)
 
-* Sample one trajectory:
-  * First, sample the initial state, and transmit the initial observation to the agent
+-- Create the sensor used by the agent
+sensor=rltorch.CartPole_CompleteSensor(world)
 
-```lua
-    local initial_observation=env:reset()
-    policy:new_episode(env:reset())  
-```
-  * Second, the main loop:
+-- Create the sensor that will be used for visualization
+renderer=rltorch.CartPole_QtSensor(world,320,200)
 
-```lua 
-    local total_reward=0 
-    while(true) do
-      env:render{mode="console"}      
-      --env:render{mode="qt"}      
+-- Create a random policy
+policy=rltorch.RandomPolicy(nil,world.action_space)
 
-      local action=policy:sample()  -- sample one action based on the policy
-      local observation,reward,done,info=unpack(env:step(action))  -- apply the action
-      policy:feedback(reward) -- transmit the (immediate) reward to the policy
+MAX_LENGTH=100
+DISCOUNT_FACTOR=0.9
+
+for i=1,100 do
+    print("Starting episode "..i)
+    
+    world:reset()
+    
+    -- Compute an observation of the world and feed the policy
+    local observation=sensor:observe(world)
+    policy:new_episode(observation)  
+    
+    local sum_reward=0.0
+    local current_discount=1.0
+    
+    for t=1,MAX_LENGTH do        
+      local action=policy:sample()      
+      world:step(action)
+      local done=task:finished(world)
+      
+      local feedback=task:feedback(world)
+      assert(feedback.reward~=nil)
+      policy:feedback(feedback) -- the immediate reward is provided to the policy
+      
+      -- Feed the policy with a new observation
+      observation=sensor:observe(world)
       policy:observe(observation)      
-      total_reward=total_reward+reward -- update the total reward for this trajectory
-
-      --- Leave the loop if the environment is in a final state
+      
+      -- Computes the overall reward
+      sum_reward=sum_reward+current_discount*feedback.reward -- computes the discounted sum of rewards
+      current_discount=current_discount*DISCOUNT_FACTOR      
       if (done) then
         break
-      end
+      end 
     end
-    policy:end_episode(total_reward) -- Transmit the total trajectory reward to the policy
-   env:close()
+    policy:end_episode(sum_reward) -- The feedback provided for the whole episode here is the discounted sum of rewards   
+    print("Reward is "..sum_reward)
+end
+world:close()
 ```
 
-Note that, depending on the policy, sometimes the immediate feedback will be necessary (DeepQLearning for example), sometimes only the trajectory feedback will be enough (PolicyGradient)
 

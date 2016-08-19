@@ -1,9 +1,10 @@
 
-# Atari_v0
+# Atari
 
-The Atari environment with 18 actions
+* `AtariWorld`: the world of any atari game given a rom file
+* `AtariWorld_Breakout`: the world of breakout (only 3 actions)
 
-# Atari_Breakout_v0
+* Sensors:
+  * `Atari_ImageSensor`: returns a (3x210x160) image. You can use `FlattenSensor` to convert the matrix to a vector
+* `Atari_Task`: the classical Atari reward problem
 
-The same thing but actions are limited to actions 2,4,5 (for the breakout game)
- 

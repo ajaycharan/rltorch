@@ -1,6 +1,7 @@
 require ('optim') 
 require('rltorch')
-package.path = '/home/denoyer/alewrap/?/init.lua;' .. package.path
+require('image')
+--package.path = '/home/denoyer/alewrap/?/init.lua;' .. package.path
 local alewrap = require 'alewrap'
 
 
@@ -9,13 +10,16 @@ DISCOUNT_FACTOR=1.0
 NB_TRAJECTORIES=10000
 
 --env = rltorch.MountainCar_v0()
-env = rltorch.Atari_Breakout_v0({rom="environments/ale/roms/breakout.bin"})
-math.randomseed(os.time())
-sensor=rltorch.BatchVectorSensor_ForAtari(env.observation_space,40,30,true)
-
-local size_input=sensor:size()
-print("Inpust size is "..size_input)
-local nb_actions=env.action_space.n
+--- Build the problem components
+ 
+world=rltorch.AtariWorld({rom="environments/ale/roms/breakout.bin"}) -- the world
+  
+  task=rltorch.Atari_Task(world) -- the task
+  sensor=rltorch.Atari_ImageSensor(world) -- the sensor. Here, one has to use a sensor that provides a 1xn tensor
+  fsensor=rltorch.FlattenSensor(world,sensor) -- the fsensor is the flattened 1xn version of the original sensor
+local size_input=fsensor.observation_space:size()[2]
+print("Input size is "..size_input)
+local nb_actions=world.action_space.n
 print("Number of actions is "..nb_actions)
 
 -- Creating the policy module
@@ -34,25 +38,33 @@ local arguments={
   }
   
 --policy=rltorch.RandomPolicy(env.observation_space,env.action_space,sensor)
-policy=rltorch.PolicyGradient(env.observation_space,env.action_space,sensor,arguments)
+policy=rltorch.PolicyGradient(fsensor.observation_space,world.action_space,arguments)
 
+-- Learning loop
 local rewards={}
-
-
 for i=1,NB_TRAJECTORIES do
-  print("Starting episode "..i)
-    policy:new_episode(env:reset())  
+    print("Starting episode "..i)
+    world:reset()
+    policy:new_episode(fsensor:observe(world))  
     local sum_reward=0.0
     local current_discount=1.0
     
-    for t=1,MAX_LENGTH do  
-     if (i%100==1) then env:render{mode="qt",fps=nil}       end
-     -- env:render{mode="human"}      
-      local action=policy:sample()      
-      local observation,reward,done,info=unpack(env:step(action))   
-      policy:feedback(reward) -- the immediate reward is provided to the policy
+    for t=1,MAX_LENGTH do            
+      local action=policy:sample()     
+      world:step(action)
+      
+      -- for rendering
+      local render=sensor:observe(world)
+      win=image.display({image=render,win=win})
+      
+      -- for learning
+      local observation=fsensor:observe(world)
+      local feedback=task:feedback(world)
+      local done=task:finished(world)
+      assert(feedback.reward~=nil)      
+      policy:feedback(feedback.reward) -- the immediate reward is provided to the policy
       policy:observe(observation)      
-      sum_reward=sum_reward+current_discount*reward -- comptues the discounted sum of rewards
+      sum_reward=sum_reward+current_discount*feedback.reward -- comptues the discounted sum of rewards
       current_discount=current_discount*DISCOUNT_FACTOR      
       if (done) then        
         break
@@ -60,8 +72,8 @@ for i=1,NB_TRAJECTORIES do
     end
     
     rewards[i]=sum_reward
-    if (i%1==0) then gnuplot.plot(torch.Tensor(rewards),"|") end
+    print("Reward at "..i.." is "..sum_reward)
+    if (i%100==0) then gnuplot.plot(torch.Tensor(rewards),"|") end
     
     policy:end_episode(sum_reward) -- The feedback provided for the whole episode here is the discounted sum of rewards      
 end
-env:close()
