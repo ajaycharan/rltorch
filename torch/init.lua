@@ -13,6 +13,8 @@ include('Trajectory.lua')
 include('Trajectories.lua')
 
 include('FlattenSensor.lua')
+include('MultiSensor.lua')
+include('MultiSensorConcatenation.lua')
 
 include('Space.lua')
 include('Discrete.lua')

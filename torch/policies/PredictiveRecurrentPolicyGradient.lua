@@ -110,7 +110,6 @@ end
 function  PredictiveRecurrentPolicyGradient:observe(observation)  
   self.last_sensor=observation:clone()
   self.trajectory:push_observation(self.last_sensor)
-  
   self.states[self.position+1]=self.rmodules[self.trajectory.actions[self.position]][self.position]:forward({self.states[self.position],self.last_sensor})
   self.position=self.position+1  
 end

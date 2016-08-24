@@ -8,8 +8,7 @@ local Policy = torch.class('rltorch.Policy');
 -- See Space.lua
 function Policy:__init(observation_space,action_space)
   self.observation_space=observation_space
-  self.action_space=action_space
-  self.sensor=sensor
+  self.action_space=action_space  
   self.train=true -- Default is training mode
 end
 

@@ -3,7 +3,15 @@
 local MultipleSpaces = torch.class('rltorch.MultipleSpaces','rltorch.Space'); 
  
 function MultipleSpaces:__init()
-  
+  self.spaces={}
+end
+ 
+ function MultipleSpaces:add(s)
+   self.spaces[#self.spaces+1]=s
+end
+
+function MultipleSpaces:size()
+  return(#self.spaces)
 end
  
 function MultipleSpaces:sample()
