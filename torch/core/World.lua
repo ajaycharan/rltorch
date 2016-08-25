@@ -4,11 +4,10 @@
 local World = torch.class('rltorch.World'); 
  
 --- Initialize the world (with parameters if needed)
---- self.state will contain the variables of the world 
 --- self.action_space describes the set of possible actions
 function World:__init(parameters)
   self.parameters=parameters
-  self.state={}  
+  self.action_space=nil
 end
  
 ---Update the environment given the chosen action

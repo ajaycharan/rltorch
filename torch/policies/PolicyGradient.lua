@@ -56,7 +56,10 @@ function PolicyGradient:init()
       self.modules[t]:reinforce(sum_reward)
       self.modules[t]:backward(self.trajectory.observations[t],self.delta)
     end
-             
+      --print(torch.norm(self.grad))
+      --print(self.grad:max())
+      --print(self.grad:min())
+      --grad_params:clamp(-1, 1)
     return -sum_reward,self.grad           
   end
 end
