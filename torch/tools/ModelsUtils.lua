@@ -2,7 +2,18 @@ require 'torch'
 
 ---- SOME TOOLS
 
- local ModelsUtils = torch.class('rltorch.ModelsUtils');
+local ModelsUtils = torch.class('rltorch.ModelsUtils');
+
+function ModelsUtils:deepcopy(x)
+	if (x.clone~=nil) then return(x:clone()) 
+	elseif(type(x)=="table") then 
+		local retour={}
+		for k,v in pairs(x) do
+			retour[k]=self:deepcopy(v)
+		end
+		return retour
+	else return x end
+end
  
 function ModelsUtils:combine_all_parameters(...)
     --[[ like module:getParameters, but operates on many modules ]]--

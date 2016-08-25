@@ -1,16 +1,15 @@
-tds=require 'tds' 
 
 -- This class describes a trajectory (o1, a1, r1, o2, a2, r2, o3, ....)
 local Trajectory = torch.class('rltorch.Trajectory'); 
 
 function Trajectory:__init()
-  self.observations=tds.Vec()
-  self.actions=tds.Vec()
-  self.feedback=tds.Vec()
-  self.done=tds.Vec()  
+  self.observations={}
+  self.actions={}
+  self.feedback={}
+  self.done={}
 end
 
-function Trajectory:push_observation(o)
+function Trajectory:push_observation(o)  
   self.observations[#self.observations+1]=o
 end
   

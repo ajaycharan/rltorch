@@ -29,12 +29,13 @@ function PolicyGradient:__init(observation_space,action_space,arguments)
   
   self.policy_module=arguments.policy_module
   self.max_trajectory_size=arguments.max_trajectory_size
+  self.models_utils=rltorch.ModelsUtils()
   self:init()
 end
 
 function PolicyGradient:init()    
-  self.params, self.grad = rltorch.ModelsUtils():combine_all_parameters(self.policy_module) 
-  self.modules=rltorch.ModelsUtils():clone_many_times(self.policy_module,self.max_trajectory_size)
+  self.params, self.grad = self.models_utils:combine_all_parameters(self.policy_module) 
+  self.modules=self.models_utils:clone_many_times(self.policy_module,self.max_trajectory_size)
   self.delta=torch.Tensor(1,self.action_space.n):fill(1)
   
   self.feval = function(params_new)
@@ -66,13 +67,14 @@ end
 
 function PolicyGradient:new_episode(initial_observation,informations)
   self.trajectory=rltorch.Trajectory()
-  self.last_sensor=initial_observation:clone()
+  self.last_sensor=self.models_utils:deepcopy(initial_observation)
+
   self.trajectory:push_observation(self.last_sensor)
 end
 
 function  PolicyGradient:observe(observation)  
-  self.last_sensor=observation:clone()
-  --print(self.last_sensor)
+  self.last_sensor=self.models_utils:deepcopy(observation)
+
   self.trajectory:push_observation(self.last_sensor)  
 end
 
