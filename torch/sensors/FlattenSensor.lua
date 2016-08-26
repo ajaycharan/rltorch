@@ -12,8 +12,7 @@ end
 
 function FlattenSensor:observe(world)  
  local o=self.sensor_to_flatten:observe(world):reshape(1,self.n)
- print(o:size())
-   return o
+ return o
 end
 
  
