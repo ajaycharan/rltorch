@@ -5,7 +5,9 @@ require 'torch'
 local ModelsUtils = torch.class('rltorch.ModelsUtils');
 
 function ModelsUtils:deepcopy(x)
-	if (x.clone~=nil) then return(x:clone()) 
+	if (type(x)=="number") then return x
+	elseif(type(x)=="string") then return x
+	elseif (x.clone~=nil) then return(x:clone()) 
 	elseif(type(x)=="table") then 
 		local retour={}
 		for k,v in pairs(x) do
