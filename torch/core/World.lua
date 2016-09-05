@@ -26,3 +26,11 @@ end
 function World:close()
   
 end
+
+function World:clone()
+  assert(false)
+end
+
+function World:toString()
+  assert(false)
+end

@@ -57,13 +57,45 @@ function ExperimentLog:getColumn(name)
   return c
 end
 
+------ each element is {name=name of the column, type=single, cumsum or sliding, size=size of sliding window}
 function ExperimentLog:plot(...)  
   if (#self.jsons==0) then return end
   local ns={...}
   local tt={}
   local pos=1  
   for k,v in pairs(ns) do
-    tt[pos]={v,self:getColumn(v),"linespoints ls "..k}
+    if ((v.type==nil) or (v.type=="single")) then
+      tt[pos]={v.name,self:getColumn(v.name),"linespoints ls "..k}
+      
+    elseif(v.type=="cumsum") then
+      tt[pos]={v.name.." (cumsum)",self:getColumn(v.name):cumsum(),"linespoints ls "..k}
+      
+    elseif(v.type=="avg_cumsum") then
+      local c=self:getColumn(v.name):cumsum()
+      local d=torch.linspace(1,c:size(1),c:size(1))
+      c:cdiv(d)
+      tt[pos]={v.name.." (avg_cumsum)",c,"linespoints ls "..k}
+      
+    elseif(v.type=="avg_sliding") then
+      local c=self:getColumn(v.name)
+      local s=v.size
+      local t
+      if (c:size(1)>s) then
+        local cs=c:cumsum()
+        t=torch.Tensor(c:size(1))
+        for i=1,s do
+          t[i]=cs[i]/i
+        end
+        for i=s+1,c:size(1) do
+          t[i]=c:narrow(1,i-s,s):sum()/s
+        end
+      else
+        t=c:cumsum()
+      end
+      tt[pos]={v.name.. "(avg sliding "..v.size..")",t,"linespoints ls "..k}
+    end
+    
+    
     pos=pos+1
   end
   gnuplot.plot(tt)
