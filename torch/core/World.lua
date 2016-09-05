@@ -23,8 +23,7 @@ function World:reset(parameters)
 end 
 
 --- Close the world (at the end of the process)
-function World:close()
-  
+function World:close()  
 end
 
 function World:clone()
