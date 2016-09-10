@@ -91,9 +91,14 @@ function ExperimentLog:plot(...)
         end
       else
         t=c:cumsum()
+        t:cdiv(torch.linspace(1,c:size(1),c:size(1)))
       end
       tt[pos]={v.name.. "(avg sliding "..v.size..")",t,"linespoints ls "..k}
     end
+    
+    ------
+    if (v.mul~=nil) then tt[pos][2]:mul(v.mul) end
+    
     
     
     pos=pos+1

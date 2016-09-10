@@ -44,12 +44,15 @@ function PolicyGradient:init()
     end
     
     self.grad:zero()
-    if (self.memory_reward_position>self.memory_reward:size(1)) then self.memory_reward:resize(self.memory_reward_position) end
-    self.memory_reward[self.memory_reward_position]=self.reward_trajectory
-    self.memory_reward_position=self.memory_reward_position+1
-    if (self.memory_reward_position>self.memory_reward_size) then self.memory_reward_position=1 end    
-    local avg_reward=self.memory_reward:mean()
-    print("AVG REWARD = "..avg_reward)
+    local avg_reward=0
+    if (self.memory_reward_size>1) then
+      if (self.memory_reward_position>self.memory_reward:size(1)) then self.memory_reward:resize(self.memory_reward_position) end
+      self.memory_reward[self.memory_reward_position]=self.reward_trajectory
+      self.memory_reward_position=self.memory_reward_position+1
+      if (self.memory_reward_position>self.memory_reward_size) then self.memory_reward_position=1 end    
+      local avg_reward=self.memory_reward:mean()
+    end
+    
     local sum_reward=torch.Tensor(1):fill(self.reward_trajectory-avg_reward)
     
     for t=1,self.trajectory:get_number_of_observations()-1 do
