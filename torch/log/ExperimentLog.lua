@@ -58,9 +58,9 @@ function ExperimentLog:getColumn(name)
 end
 
 ------ each element is {name=name of the column, type=single, cumsum or sliding, size=size of sliding window}
-function ExperimentLog:plot(...)  
+function ExperimentLog:plot(to_plot)  
   if (#self.jsons==0) then return end
-  local ns={...}
+  local ns=to_plot; print(ns)
   local tt={}
   local pos=1  
   for k,v in pairs(ns) do
@@ -103,6 +103,7 @@ function ExperimentLog:plot(...)
     
     pos=pos+1
   end
+  print(tt)
   gnuplot.plot(tt)
 end
 
