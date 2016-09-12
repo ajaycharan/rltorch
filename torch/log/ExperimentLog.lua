@@ -57,7 +57,7 @@ function ExperimentLog:getColumn(name)
   return c
 end
 
------- each element is {name=name of the column, type=single, cumsum or sliding, size=size of sliding window}
+------ each element is {name=name of the column, type=single, cumsum or sliding, size=size of sliding window, mul can be a multiplicative coefficient}
 function ExperimentLog:plot(to_plot)  
   if (#self.jsons==0) then return end
   local ns=to_plot; print(ns)
@@ -102,6 +102,23 @@ function ExperimentLog:plot(to_plot)
     
     
     pos=pos+1
+  end
+  print(tt)
+  gnuplot.plot(tt)
+end
+
+function ExperimentLog:plot3D(columns)  
+  if (#self.jsons==0) then return end
+  local tt={}; local pos=1
+  for _,c in ipairs(columns) do    
+    for k,v in ipairs(self.jsons) do
+      local value=v[c.name]
+      assert(type(value)=='table')
+      local vector=torch.Tensor(value)
+      if (c.type=="cumsum") then vector=vector:cumsum() end
+      tt[pos]={c.name.." at "..k,vector,"linespoints ls "..pos}
+      pos=pos+1
+    end
   end
   print(tt)
   gnuplot.plot(tt)
