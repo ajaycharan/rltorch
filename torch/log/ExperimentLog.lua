@@ -93,9 +93,8 @@ function ExperimentLog:plot(to_plot)
         t=c:cumsum()
         t:cdiv(torch.linspace(1,c:size(1),c:size(1)))
       end
-      tt[pos]={v.name.. "(avg sliding "..v.size..")",t,"linespoints ls "..k}
+      tt[pos]={v.name.." (avg_sliding "..s..")",t}
     end
-    
     ------
     if (v.mul~=nil) then tt[pos][2]:mul(v.mul) end
     
@@ -116,11 +115,10 @@ function ExperimentLog:plot3D(columns)
       assert(type(value)=='table')
       local vector=torch.Tensor(value)
       if (c.type=="cumsum") then vector=vector:cumsum() end
-      tt[pos]={c.name.." at "..k,vector,"linespoints ls "..pos}
+      tt[pos]={c.name.." at "..k,vector,"lines ls "..pos}
       pos=pos+1
     end
   end
-  print(tt)
   gnuplot.plot(tt)
 end
 
