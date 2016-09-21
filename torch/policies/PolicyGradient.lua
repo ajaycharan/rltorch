@@ -96,4 +96,8 @@ function PolicyGradient:end_episode(feedback)
   if (self.train) then   local _,fs=self.optim(self.feval,self.params,self.optim_params)  end
 end
 
+function PolicyGradient:reset(stdv)
+  self.params:copy(torch.randn(self.params:size())*stdv)
+end
  
+

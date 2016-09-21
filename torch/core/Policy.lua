@@ -33,3 +33,6 @@ end
 function Policy:end_episode(feedback)
 end
 
+function Policy:reset()
+  assert(false,"Policy:reset not defined")
+end

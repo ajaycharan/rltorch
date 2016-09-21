@@ -102,7 +102,7 @@ function ExperimentLog:plot(to_plot)
     
     pos=pos+1
   end
-  print(tt)
+--  print(tt)
   gnuplot.plot(tt)
 end
 
