@@ -7,6 +7,7 @@ This package is a Reinforcement Learning package written in LUA for Torch. It ma
 * The different policies can be easily used with `openAI Gym` directly in python by using the `lutorpy` package
 
 # News
+* 19th of October 2016: OpenAI works again....
 * 19th of August 2016: Major update ! 
   * Now, environments have been splitted in three components: `World`, `Sensor` and `Feedback`. It allows one to easily specify different sensors, and different problems on the same world. It also greatly increase the readability of the platform
   * Tutorials have been updated
