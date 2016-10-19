@@ -29,3 +29,7 @@ function Trajectory:get_number_of_observations()
   return( #self.observations)
 end
   
+function Trajectory:get_number_of_feedback()
+  return( #self.feedback)
+end
+  
