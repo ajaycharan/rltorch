@@ -2,8 +2,6 @@ import gym
 import lutorpy as lua
 
 #Example of policy gradient (see the torch tutorials)
-
-
 require('rltorch') 
 require('nn')
 require('dpnn')
@@ -17,10 +15,9 @@ MAX_LENGTH=100
 env = gym.make('CartPole-v0')
 action_space=rltorch.Discrete(env.action_space.n)
 observation_space=rltorch.Box(torch.fromNumpyArray(env.observation_space.low),torch.fromNumpyArray(env.observation_space.high))
-sensor=rltorch.BatchVectorSensor(observation_space)
+sensor=rltorch.OpenAISensor(observation_space)
 size_input=sensor._size()
-print(size_input)
-print("Inpust size is %d" % size_input)
+print("Input size is %d" % size_input)
 nb_actions=env.action_space.n
 print("Number of actions is %d " % nb_actions)
 
@@ -28,17 +25,16 @@ print("Number of actions is %d " % nb_actions)
 module_policy=nn.Sequential()._add(nn.Linear(size_input,nb_actions))._add(nn.SoftMax())._add(nn.ReinforceCategorical())
 module_policy._reset(0.001)
 
-
 optim_params=lua.table(learningRate = 0.01)
-arguments = lua.table(policy_module = module_policy, max_trajectory_size = MAX_LENGTH,   optim = optim.adam,  optim_params = optim_params, scaling_reward = 1.0/MAX_LENGTH,
+arguments = lua.table(policy_module = module_policy, max_trajectory_size = MAX_LENGTH,   optim = optim.adam,  optim_params = optim_params,
  size_memory_for_bias = 100)
-policy=rltorch.PolicyGradient(observation_space,action_space,sensor,arguments)
+policy=rltorch.PolicyGradient(observation_space,action_space,arguments)
 
 for i_episode in range(NB_TRAJECTORIES):
     observation = env.reset()
     print(observation)
     obs=torch.fromNumpyArray(observation)
-    policy._new_episode(obs)
+    policy._new_episode(sensor._observe(obs))
     total_reward=0
     current_discount=1.0
     for t in range(MAX_LENGTH):
@@ -48,7 +44,7 @@ for i_episode in range(NB_TRAJECTORIES):
         observation, reward, done, info = env.step(action)
         total_reward=total_reward+reward*current_discount
         current_discount=current_discount*DISCOUNT_FACTOR
-        policy._observe(torch.fromNumpyArray(observation))
+        policy._observe(sensor._observe(torch.fromNumpyArray(observation)))
         if done:
             print("Episode finished after {} timesteps".format(t+1))
             print("Reward is %f" % total_reward)
