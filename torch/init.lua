@@ -69,6 +69,7 @@ include('ExperimentLogCSV.lua')
 include('ExperimentLogConsole.lua')
 include('ModelsUtils.lua')
 include('ScalarMemory.lua')
+include('OpenAISensor.lua')
 include('GRU.lua')
 include('RNN.lua')
 
